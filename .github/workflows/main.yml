@@ -1,0 +1,71 @@
+name: GitHub Classroom Autograding
+
+on: [push]
+
+jobs:
+  build:
+    name: Autograde Normalization Assignment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Run Autograder Test Suite
+        run: |
+          python -c '
+          import os, sys, sqlite3
+
+          # 1. Test SQL Schema
+          print("--- Running Test 1: SQL Schema Validation ---")
+          if not os.path.exists("schema.sql"):
+              print("FAIL: schema.sql file missing.")
+              sys.exit(1)
+
+          conn = sqlite3.connect(":memory:")
+          cursor = conn.cursor()
+          cursor.execute("PRAGMA foreign_keys = ON;")
+
+          try:
+              with open("schema.sql", "r") as f:
+                  cursor.executescript(f.read())
+              print("PASS: SQL syntax is valid.")
+          except Exception as e:
+              print(f"FAIL: SQL execution error: {e}")
+              sys.exit(1)
+
+          cursor.execute("SELECT name FROM sqlite_master WHERE type=\"table\";")
+          tables = [row[0].lower() for row in cursor.fetchall()]
+          if "student" not in tables or "course" not in tables:
+              print(f"FAIL: Missing expected tables. Found: {tables}")
+              sys.exit(1)
+          print("PASS: Both Student and Course tables created.")
+
+          cursor.execute("PRAGMA foreign_key_list(Student);")
+          if not cursor.fetchall():
+              print("FAIL: No foreign key constraint found on Student table referencing Course.")
+              sys.exit(1)
+          print("PASS: Foreign key constraint confirmed.")
+
+          # 2. Test submission.txt
+          print("\n--- Running Test 2: Theoretical Submission Check ---")
+          if not os.path.exists("submission.txt"):
+              print("FAIL: submission.txt missing.")
+              sys.exit(1)
+
+          with open("submission.txt", "r") as f:
+              content = f.read().lower()
+
+          required_keywords = ["transitive", "1nf", "2nf", "3nf", "coursename", "studentid"]
+          missing = [kw for kw in required_keywords if kw not in content]
+          if missing:
+              print(f"FAIL: submission.txt missing key concepts: {missing}")
+              sys.exit(1)
+
+          print("PASS: submission.txt validated.")
+          print("\nALL TESTS PASSED! Grade: 100/100")
+          '

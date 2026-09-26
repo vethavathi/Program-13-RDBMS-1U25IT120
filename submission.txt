@@ -1,0 +1,12 @@
+=== Step 1: Functional Dependencies ===
+1. StudentID -> StudentName, CourseName
+2. CourseName -> FacultyName, DepartmentName
+
+=== Step 2: Normalization Steps ===
+1NF: Ensure all attributes are atomic and each record is unique.
+2NF: Eliminate partial dependencies. Since StudentID is a single-attribute key, it is already in 2NF.
+3NF: Eliminate transitive dependencies. FacultyName and DepartmentName transitively depend on StudentID through CourseName.
+
+=== Step 3: Final 3NF Schema ===
+Table 1 Name: Course (CourseName [PK], FacultyName, DepartmentName)
+Table 2 Name: Student (StudentID [PK], StudentName, CourseName [FK])
